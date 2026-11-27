@@ -1,54 +1,33 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: sans-serif; background: #ece5dd; margin: 0; padding: 10px; }
-        #chat { height: 80vh; overflow-y: auto; }
-        .naina { background: white; padding: 10px; margin: 5px; border-radius: 10px; }
-        .user { background: #dcf8c6; padding: 10px; margin: 5px; border-radius: 10px; text-align: right; }
-    </style>
-</head>
-<body>
-    <div id="chat"></div>
-    <div style="position:fixed; bottom:0; width:95%; padding:10px;">
-        <input type="text" id="inp" placeholder="Type..." style="width:70%; padding:10px;">
-        <button onclick="send()">Send</button>
-    </div>
-
+<head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{background:#0b141a;color:#e9edef;font-family:sans-serif;margin:0;display:flex;flex-direction:column;height:100vh;}#chat{flex:1;padding:15px;overflow-y:auto;}.naina{background:#202c33;padding:10px;border-radius:8px;margin:10px 0;max-width:80%;}.user{background:#005c4b;padding:10px;border-radius:8px;margin:10px 0;max-width:80%;margin-left:auto;text-align:right;}.input-area{background:#202c33;padding:10px;display:flex;}input{flex:1;padding:10px;background:#2a3942;border:none;border-radius:20px;color:white;}button{background:#00a884;color:white;border:none;padding:10px 20px;border-radius:20px;margin-left:5px;}</style></head>
+<body><div id="chat"></div><div class="input-area"><input type="text" id="inp"><button onclick="send()">Send</button></div>
 <script>
 async function send() {
     const inp = document.getElementById('inp');
     const msg = inp.value;
-    document.getElementById('chat').innerHTML += `<div class="user">${msg}</div>`;
+    document.getElementById('chat').innerHTML += '<div class="user">'+msg+'</div>';
     inp.value = '';
-
-    const res = await fetch('/chat', {
+    const res = await fetch('https://naina-k8xf.onrender.com/chat', { 
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ message: msg, userIp: 'USER_IP_FROM_SERVER' })
+        body: JSON.stringify({ message: msg, userIp: 'USER_IP' })
     });
     const data = await res.json();
-    
     let reply = data.reply;
-    if (reply.includes('[SHOW_QR]')) {
-        reply = reply.replace('[SHOW_QR]', '');
-        document.getElementById('chat').innerHTML += `
-            <div class="naina">
-                Yaar, 30rs ka recharge kar do, phir unlimited baatein karenge!<br>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?data=upi://pay?pa=Q57363994@ybl&pn=Naina&am=30.00&cu=INR" width="200"><br>
-                <input type="text" id="utr" placeholder="Enter UTR here...">
-                <button onclick="submitUTR()">Submit UTR</button>
-            </div>`;
+    if(reply.includes('[SHOW_QR]')) {
+        reply = reply.replace('[SHOW_QR]','');
+        document.getElementById('chat').innerHTML += '<div class="naina">Recharge 30rs: <img src="https://api.qrserver.com/v1/create-qr-code/?data=upi://pay?pa=Q57363994@ybl&am=30" width="100"><br><input id="utr" placeholder="UTR..."><button onclick="submitUTR()">Submit</button></div>';
     }
-    document.getElementById('chat').innerHTML += `<div class="naina">${reply}</div>`;
+    document.getElementById('chat').innerHTML += '<div class="naina">'+reply+'</div>';
 }
-
 async function submitUTR() {
     const utr = document.getElementById('utr').value;
-    alert("UTR: " + utr + " bheja gaya. Check kar rahi hoon!");
-    // Yahan backend ko UTR bhejenge
+    await fetch('https://naina-k8xf.onrender.com/submit-utr', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ utr: utr, ip: 'USER_IP' })
+    });
+    alert("Sent!");
 }
-</script>
-</body>
-</html>
+</script></body></html>
