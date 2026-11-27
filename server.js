@@ -15,27 +15,32 @@ app.use(express.static('public'));
 app.post('/chat', async (req, res) => {
     try {
         const { message, userIp } = req.body;
-        // Query fix: SELECT statement sahi kiya
-        let result = await pool.query("SELECT * FROM users WHERE ip_address = ", [userIp]);
-        let user = result.rows[0];
+        // Query check: IP se user dhundo
+        let resDB = await pool.query("SELECT * FROM users WHERE ip_address = ", [userIp]);
+        let user = resDB.rows[0];
         
         if (!user) {
-            await pool.query("INSERT INTO users (ip_address, first_interaction) VALUES (, NOW())", [userIp]);
+            await pool.query("INSERT INTO users (ip_address) VALUES ()", [userIp]);
             user = { is_paid: false };
         }
 
-        const timeDiff = (new Date() - new Date(user.first_interaction)) / 60000;
-        const triggerPayment = (!user.is_paid && timeDiff > 15) ? " [SHOW_QR]" : "";
-
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const aiRes = await model.generateContent("You are Naina, 25, from Delhi. Short replies. User: " + message);
-        res.json({ reply: aiRes.response.text() + triggerPayment });
+        const aiRes = await model.generateContent("You are Naina, 25, Delhi. Short lovely replies. User: " + message);
+        res.json({ reply: aiRes.response.text() });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ reply: "Yaar, server thoda busy hai, ruk ja na." });
+        res.status(500).json({ reply: "Yaar, busy hoon abhi." });
     }
 });
 
-// Bot setup bina conflict ke
-bot.launch().catch(e => console.log("Bot already running"));
+app.post('/submit-utr', async (req, res) => {
+    await bot.telegram.sendMessage(process.env.ADMIN_CHAT_ID, "🔔 Payment aaya hai!");
+    res.json({ status: "Sent" });
+});
+
+// Bot launch sirf tabhi karein agar development na ho
+if (process.env.NODE_ENV !== 'test') {
+    bot.launch().catch(err => console.log("Bot already running"));
+}
+
 app.listen(process.env.PORT || 3000, () => console.log("Naina Live"));
