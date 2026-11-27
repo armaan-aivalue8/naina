@@ -1,16 +1,22 @@
-const { Telegraf, Markup } = require('telegraf');
-const { query } = require('./db');
+const { Telegraf } = require('telegraf');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 
-// User jab UTR aur Screenshot bheje (Yeh logic baad mein front-end se connect hoga)
-// Filhal main structure dikha raha hoon
+// Approval Logic
 bot.action(/approve_(.+)/, async (ctx) => {
     const ip = ctx.match[1];
-    await query("UPDATE users SET is_paid = true, expiry_date = NOW() + INTERVAL '30 days' WHERE ip_address = $1", [ip]);
-    ctx.editMessageText(`✅ Payment Accepted for IP: ${ip}`);
+    await pool.query("UPDATE users SET is_paid = true, expiry_date = NOW() + INTERVAL '30 days' WHERE ip_address = ", [ip]);
+    ctx.editMessageText("✅ Payment Accepted! Naina is now unlocked for 30 days.");
+});
+
+// Rejection Logic
+bot.action(/reject_(.+)/, async (ctx) => {
+    const ip = ctx.match[1];
+    ctx.editMessageText("❌ Payment Rejected. Please check UTR and notify the user.");
 });
 
 bot.launch();
-console.log("Telegram Bot is running...");
+console.log("Telegram Bot with UTR Verification is running...");
