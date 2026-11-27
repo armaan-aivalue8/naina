@@ -15,20 +15,21 @@ app.use(express.static('public'));
 app.post('/chat', async (req, res) => {
     try {
         const { message, userIp } = req.body;
-        let resDB = await pool.query("SELECT * FROM users WHERE ip_address = ", [userIp]);
+        // Corrected SQL queries
+        let resDB = await pool.query("SELECT * FROM users WHERE ip_address = $1", [userIp]);
         let user = resDB.rows[0];
-        
+
         if (!user) {
-            await pool.query("INSERT INTO users (ip_address) VALUES ()", [userIp]);
+            await pool.query("INSERT INTO users (ip_address) VALUES ($1)", [userIp]);
             user = { is_paid: false };
         }
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const aiRes = await model.generateContent("You are Naina, 25, Delhi. Lovely, Hinglish, short replies. User says: " + message);
+        const aiRes = await model.generateContent("You are Naina, 25, Delhi. Short lovely replies. User: " + message);
         res.json({ reply: aiRes.response.text() });
     } catch (err) {
         await bot.telegram.sendMessage(process.env.ADMIN_CHAT_ID, "⚠️ Error: " + err.message);
-        res.status(500).json({ reply: "Yaar, abhi thodi busy hoon." });
+        res.status(500).json({ reply: "Yaar, busy hoon abhi." });
     }
 });
 
