@@ -3,8 +3,9 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { background: #0b141a; color: #e9edef; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        #header { background: #202c33; padding: 15px; font-weight: bold; font-size: 18px; border-bottom: 1px solid #333; }
+        body { background: #0b141a; color: #e9edef; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        #header { background: #202c33; padding: 10px; display: flex; align-items: center; border-bottom: 1px solid #333; }
+        .dp { width: 40px; height: 40px; border-radius: 50%; background: #ff4d4d; margin-right: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
         #chat { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
         .naina { background: #202c33; padding: 10px; border-radius: 8px; margin: 5px 0; max-width: 80%; align-self: flex-start; }
         .user { background: #005c4b; padding: 10px; border-radius: 8px; margin: 5px 0; max-width: 80%; align-self: flex-end; }
@@ -14,48 +15,21 @@
     </style>
 </head>
 <body>
-    <div id="header">Naina</div>
+    <div id="header"><div class="dp">❤️</div> Naina</div>
     <div id="chat"></div>
     <div class="input-area">
         <input type="text" id="inp" placeholder="Message Naina...">
         <button onclick="send()">Send</button>
     </div>
-
 <script>
 async function send() {
     const inp = document.getElementById('inp');
-    const msg = inp.value;
-    if(!msg) return;
-    document.getElementById('chat').innerHTML += '<div class="user">'+msg+'</div>';
-    inp.value = '';
-    
-    try {
-        const res = await fetch('/chat', { 
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ message: msg, userIp: '127.0.0.1' })
-        });
-        const data = await res.json();
-        let reply = data.reply;
-        if(reply.includes('[SHOW_QR]')) {
-            reply = reply.replace('[SHOW_QR]','');
-            document.getElementById('chat').innerHTML += '<div class="naina">Recharge 30rs:<br><img src="https://api.qrserver.com/v1/create-qr-code/?data=upi://pay?pa=Q57363994@ybl&am=30" width="100"><br><input id="utr" placeholder="UTR..."><button onclick="submitUTR()">Submit</button></div>';
-        }
-        document.getElementById('chat').innerHTML += '<div class="naina">'+reply+'</div>';
-        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
-    } catch(e) {
-        document.getElementById('chat').innerHTML += '<div class="naina">Server busy...</div>';
-    }
+    if(!inp.value) return;
+    document.getElementById('chat').innerHTML += '<div class="user">'+inp.value+'</div>';
+    const msg = inp.value; inp.value = '';
+    const res = await fetch('/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ message: msg, userIp: '127.0.0.1' }) });
+    const data = await res.json();
+    document.getElementById('chat').innerHTML += '<div class="naina">'+data.reply+'</div>';
+    document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
 }
-async function submitUTR() {
-    const utr = document.getElementById('utr').value;
-    await fetch('/submit-utr', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ utr: utr, ip: '127.0.0.1' })
-    });
-    alert("UTR Bheja gaya!");
-}
-</script>
-</body>
-</html>
+</script></body></html>

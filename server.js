@@ -15,7 +15,6 @@ app.use(express.static('public'));
 app.post('/chat', async (req, res) => {
     try {
         const { message, userIp } = req.body;
-        // Query check: IP se user dhundo
         let resDB = await pool.query("SELECT * FROM users WHERE ip_address = ", [userIp]);
         let user = resDB.rows[0];
         
@@ -25,22 +24,19 @@ app.post('/chat', async (req, res) => {
         }
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const aiRes = await model.generateContent("You are Naina, 25, Delhi. Short lovely replies. User: " + message);
+        const aiRes = await model.generateContent("You are Naina, 25, Delhi. Lovely, Hinglish, short replies. User says: " + message);
         res.json({ reply: aiRes.response.text() });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ reply: "Yaar, busy hoon abhi." });
+        await bot.telegram.sendMessage(process.env.ADMIN_CHAT_ID, "⚠️ Error: " + err.message);
+        res.status(500).json({ reply: "Yaar, abhi thodi busy hoon." });
     }
 });
 
 app.post('/submit-utr', async (req, res) => {
-    await bot.telegram.sendMessage(process.env.ADMIN_CHAT_ID, "🔔 Payment aaya hai!");
+    const { utr, ip } = req.body;
+    await bot.telegram.sendMessage(process.env.ADMIN_CHAT_ID, `🔔 UTR: ${utr}\nIP: ${ip}`);
     res.json({ status: "Sent" });
 });
 
-// Bot launch sirf tabhi karein agar development na ho
-if (process.env.NODE_ENV !== 'test') {
-    bot.launch().catch(err => console.log("Bot already running"));
-}
-
+bot.launch().catch(e => console.log("Bot already running"));
 app.listen(process.env.PORT || 3000, () => console.log("Naina Live"));
